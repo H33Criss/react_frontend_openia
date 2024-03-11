@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   MyMessage,
   TextMessageBox,
@@ -26,22 +26,37 @@ const languages = [
 ];
 
 export const TranslatePage = () => {
+  const abortController = useRef(new AbortController());
+  const isRunning = useRef(false);
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
 
   const handlePost = async (text: string, selectedOption: string) => {
+    if (isRunning.current) {
+      abortController.current.abort();
+      abortController.current = new AbortController();
+    }
     setIsLoading(true);
+    isRunning.current = true;
     const newMessage = `Traduce : "${text}" al idioma ${selectedOption}`;
     setMessages((prev) => [...prev, { text: newMessage, isGPT: false }]);
 
-    const { ok, message } = await translateTextUseCase(text, selectedOption);
-
+    const stream = translateTextUseCase(
+      text,
+      selectedOption,
+      abortController.current.signal
+    );
     setIsLoading(false);
-    if (!ok) {
-      return alert(message);
+    setMessages((messages) => [...messages, { text: "", isGPT: true }]);
+    for await (const text of stream) {
+      setMessages((messages) => {
+        const newMessages = [...messages];
+        newMessages[newMessages.length - 1].text = text;
+        return newMessages;
+      });
     }
 
-    setMessages((prev) => [...prev, { text: message, isGPT: true }]);
+    isRunning.current = false;
   };
 
   return (

@@ -1,6 +1,8 @@
-import { TranslateResponse } from "../../interfaces/translate.response";
-
-export const translateTextUseCase = async (prompt: string, lang: string) => {
+export async function* translateTextUseCase(
+  prompt: string,
+  lang: string,
+  abortSignal: AbortSignal
+) {
   try {
     const resp = await fetch(`${import.meta.env.VITE_GPT_URL}/translate`, {
       method: "POST",
@@ -8,18 +10,27 @@ export const translateTextUseCase = async (prompt: string, lang: string) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ prompt, lang }),
+      signal: abortSignal,
     });
     if (!resp.ok) throw new Error("No se pudo realizar la traducción.");
+    const reader = resp.body?.getReader();
+    if (!reader) {
+      console.log("Reader no creado");
+      return null;
+    }
+    const decoder = new TextDecoder();
+    let text = "";
 
-    const { message } = (await resp.json()) as TranslateResponse;
-    return {
-      ok: true,
-      message,
-    };
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      const decodedChunk = decoder.decode(value, { stream: true });
+      text += decodedChunk;
+      yield text;
+    }
   } catch (error) {
-    return {
-      ok: false,
-      message: "No se pudo traducir",
-    };
+    console.log(error);
+    return null;
   }
-};
+}
