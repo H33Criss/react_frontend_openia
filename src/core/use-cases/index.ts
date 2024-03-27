@@ -4,3 +4,7 @@ export * from "./pros-cons.use-case-stream";
 export * from "./pros-cons.use-case-stream-generator";
 export * from "./translate-text.use-case";
 export * from "./translate-text.use-case";
+export * from "./texto-to-audio.use-case";
+export * from "./audio-to-text.use-case";
+export * from "./image-generation.use-case";
+export * from "./image-variation.use-case";
