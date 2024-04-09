@@ -30,7 +30,7 @@ export const ImageTunningPage = () => {
       info: {
         alt: "Imagen base",
         imageUrl:
-          "http://localhost:3000/gpt/image-generation/1711489062579.png",
+          "http://localhost:3000/gpt/image-generation/1712025742985.png",
       },
     },
   ]);
